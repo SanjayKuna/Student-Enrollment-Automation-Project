@@ -1,0 +1,303 @@
+certificate html: <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate - Central Institute of Tool Design</title>
+    <!-- The server will embed the CSS here, so this link is for browser viewing -->
+    <link rel="stylesheet" href="certificate.css"> 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman&family=Arial&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Certificate Container -->
+    <div class="certificate-container">
+        
+        <p class="serial-no-top-left">S.NO: ________/________</p>
+        <p class="cert-code-top-right">CF/TRG/17</p>
+
+        <!-- Header Section -->
+        <header class="header-section">
+            <div class="header-left"></div>
+            <div class="header-center">
+                <p class="text-2xl">MSME-TOOL ROOM, HYDERABAD</p>
+                <h1 class="text-xl">CENTRAL INSTITUTE OF TOOL DESIGN</h1>
+                <p class="text-sm">(A GOVT. OF INDIA SOCIETY, MINISTRY OF MSME)</p>
+                <p class="text-sm">BALANAGAR, HYDERABAD # 500 037 (T.S.) INDIA</p>
+                <p class="text-xs">(An ISO 9001: 2015, ISO 14001:____ & ISO 50001:_____ Certified Institute)</p>
+            </div>
+            <div class="header-right"></div>
+        </header>
+        
+        <!-- Logos -->
+        <img src="msme.jpeg" alt="MSME Logo" class="logo-msme">
+        <img src="CITD_Logo.png" alt="CITD Logo" class="logo-citd">
+
+        <!-- Main Content Section -->
+        <main class="main-content">
+            <h2 class="certificate-title">CERTIFICATE</h2>
+            
+            <p class="certificate-text">
+                This is to certify that <span id="cert-gender"></span> <span class="font-bold" id="cert-name"></span> 
+                S/o / D/o. <span class="font-bold" id="cert-father"></span> is awarded this certificate in recognition
+            </p>
+            <p class="certificate-text">of his/her participation in</p>
+
+            <h3 class="course-title" id="cert-course">INTERNSHIP PROGRAMME ON </h3>
+            
+            <p class="certificate-text">
+                From <span class="font-bold date" id="cert-from"></span> to <span class="font-bold date" id="cert-to"></span>
+            </p>
+
+            <p class="font-bold certificate-text">Part Time Course</p>
+        </main>
+
+        <!-- Footer Section -->
+        <footer class="footer-section">
+            <div class="footer-left">
+                 <div class="photo-placeholder">
+                     <img src="https://placehold.co/96x128/cccccc/969696?text=Photo" alt="Recipient Photo" class="recipient-photo">
+                 </div>
+                 <div class="signature-box">
+                     Student's Signature
+                 </div>
+                 <p class="text-sm date-issue">Date of issue: <span id="cert-issue-date"></span></p>
+            </div>
+            <div class="footer-center">
+                 <div class="signature-block">
+                     <p class="font-bold text-sm sanath down">G SANATH KUMAR</p>
+                     <p class="sanath text-sm">Deputy Director (Trg.)</p>
+                 </div>
+            </div>
+            <div class="footer-right">
+                  <p class="text-lg">Given under the seal of the Institute</p>
+            </div>
+            <div class="signature-block">
+                <p class="font-bold text-sm dowm">Dr. T VIJAY KRISHNA KANTH</p>
+                <p class="text-sm dowm">Principal Director</p>
+            </div>
+        </footer>
+    </div>
+
+</body>
+</html>
+ certificate css :/* Save this file as frontend/certificate/certificate.css */
+
+/* --- Base and Font Styles --- */
+body {
+    font-family: 'Times New Roman', Times, serif;
+    background-color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 1rem;
+}
+
+.font-bold { font-weight: 700; }
+.text-xs { font-size: 0.75rem; line-height: 1rem; color: crimson; }
+.text-sm { font-size: 0.75rem; line-height: 1.25rem; }
+.text-lg { font-size: 0.9rem; line-height: 1.75rem; margin-bottom:8rem; margin-left: 30rem;margin-right: -10rem;; }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; font-weight: 700; color: crimson; }
+.text-xl { font-size: 1.2rem; line-height: 1rem; font-weight: 400; }
+
+/* --- Certificate Container --- */
+ .certificate-container {
+        width: 277mm;     /* A4 landscape width */
+        height: 190mm;    /* keep within page height */
+        box-shadow: none;
+        margin: auto;
+        border: none;
+        transform: scale(0.95);   /* shrink slightly if needed */
+        transform-origin: top center;
+        page-break-inside: avoid;
+    }
+/* --- Header Section --- */
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    color: #374151;
+    text-align: center;
+}
+.header-left, .header-right {
+    flex: 1;
+    font-family: 'Arial', sans-serif;
+    font-size: 0.875rem;
+}
+.header-left { text-align: left; }
+.header-right { text-align: right; }
+.header-center {
+    flex: 3;
+    font-family: 'Arial', sans-serif;
+}
+.header-center p, .header-center h1 {
+    margin: 2px 0;
+    line-height: 1.3;
+}
+.header-center h1 {
+    font-family: 'Times New Roman', Times, serif;
+}
+
+/* --- Logos and Seals --- */
+.logo-msme, .logo-citd {
+    position: absolute;
+}
+.logo-msme {
+    top: 3rem; 
+    left: 2rem;
+    width: 6rem;
+    height: 6rem;
+}
+.logo-citd {
+    top: 2.7rem;
+    right: 2rem;
+    width: 6rem;
+    height: 6rem;
+}
+
+/* --- Main Content --- */
+.main-content {
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #374151;
+    margin-top: 2rem; 
+}
+.certificate-title {
+    font-size: 1.2rem;
+    line-height: 2rem;
+    font-weight: 600;
+    font-family: 'Times New Roman', Times, serif;
+    margin-bottom: 2rem;
+    color: crimson;
+}
+.certificate-text {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    font-family: 'Times New Roman', Times, serif;
+    margin: 0.25rem 0;
+}
+.course-title {
+    font-size: 1rem;
+    line-height: 2rem;
+    font-weight: 600;
+    font-family: 'Times New Roman', Times, serif;
+    color: crimson;
+}
+
+/* --- Footer Section --- */
+.footer-section {
+    position: absolute;
+    bottom: 2rem;       /* lock footer at bottom */
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;  /* space out items evenly */
+    align-items: flex-end;
+    padding: 0 3rem;    /* spacing from left/right edges */
+    font-family: 'Times New Roman', serif;
+}
+.footer-left {
+    text-align: center; 
+    position: relative;
+    bottom: 1.5rem;
+}
+.photo-placeholder {
+    top:2rem;
+    width: 9rem;
+    right: -3.5rem;
+    height: 9rem;
+    background-color: #e5e7eb;
+    border: 2px dashed #9ca3af;
+    margin: 0 auto 0.5rem auto; 
+    margin-bottom:2rem;
+    margin-top: -25rem;
+    position: relative;
+
+}
+.recipient-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.signature-box {
+    width: 3.9cm;
+    height: 1cm;
+    right: 5rem;
+    border: 1px solid #000;
+    margin: 1rem auto 0 auto;
+    text-align: center;
+    font-size: 0.7rem; /* small readable text */
+    font-family: 'Times New Roman', serif;
+    display: flex;
+    align-items: center;  /* vertically center text */
+    justify-content: center; /* horizontally center text */
+    background-color: #fff;
+    position:relative;
+    left: 55px;
+}
+.date-issue {
+text-align: left;
+    font-size: 0.9rem;
+}
+.footer-center {
+    text-align: center;
+}
+.footer-right {
+     text-align: right;
+}
+.signature-block {
+    font-family: 'Times New Roman', Times, serif;
+    text-align: center; 
+}
+.signature-block .dowm {
+    margin-bottom: 1.6rem; 
+    margin-top: -1rem;
+}
+
+/* --- Absolutely Positioned Text --- */
+.serial-no-top-left {
+    position: absolute;
+    top: 1.1rem; 
+    left: 2rem; 
+    font-family: 'Arial', sans-serif;
+    font-size: 0.56rem;
+    font-weight: 700;
+    color: #374151;
+}
+.cert-code-top-right {
+    position: absolute;
+    top: 1.1rem; 
+    right: 2rem;
+    width: 6rem; 
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+    font-size: 0.56rem;
+    font-weight: 700;
+    color: #374151;
+}
+.date {
+    margin: 0 4px; 
+}
+.sanath {
+    margin-right: -33rem;
+}
+@page {
+    size: A4 landscape;  /* force A4 in landscape orientation */
+    margin: 10mm;        /* adjust margins */
+}
+
+@media print {
+    body {
+        background: white;
+        margin: 0;
+        padding: 0;
+    }
+}

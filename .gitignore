@@ -1,0 +1,11 @@
+# Ignore the folder containing all installed packages
+node_modules/
+
+# Ignore environment variables file (contains secret keys)
+.env
+
+# Ignore folder with generated application forms and certificates
+/output/
+
+# Ignore Excel files
+serial_number.txt

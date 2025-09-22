@@ -1,0 +1,1085 @@
+working full project excel sheet updation and certificate generation : 
+
+
+sererver.js : // server.js - FINAL VERSION WITH IMAGE FIX
+
+// 1. Import necessary packages
+const express = require('express');
+const puppeteer = require('puppeteer');
+const ExcelJS = require('exceljs');
+const path = require('path');
+const fs = require('fs').promises;
+const cors = require('cors');
+
+// 2. Initialize Express App
+const app = express();
+const PORT = 5000; // Using port 5000
+
+// 3. Middleware Setup
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve the frontend files
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
+
+// Define paths
+const outputDir = path.join(__dirname, '..', 'output');
+const excelFilePath = path.join(outputDir, 'registrations.xlsx');
+const certificateDir = path.join(__dirname, '..', 'frontend', 'certificate'); // Directory for certificate assets
+const certificateTemplatePath = path.join(certificateDir, 'certificate.html');
+const certificateCssPath = path.join(certificateDir, 'certificate.css');
+
+// Ensure the output directory exists
+fs.mkdir(outputDir, { recursive: true });
+
+// --- HELPER FUNCTIONS ---
+
+async function updateExcelSheet(data) {
+    const filePath = excelFilePath;
+    let existingData = [];
+
+    const columns = [
+        { header: 'Admission No', key: 'admission_no', width: 15 },
+        { header: 'Course Name', key: 'courseName', width: 30 },
+        { header: 'Applicant Name', key: 'applicantName', width: 30 },
+        { header: 'Gender', key: 'gender', width: 10 },
+        { header: 'Father Name', key: 'fatherName', width: 30 },
+        { header: 'Email', key: 'email', width: 30 },
+        { header: 'Mobile', key: 'mobile', width: 20 },
+        { header: 'Start Date', key: 'fromDate', width: 15 },
+        { header: 'End Date', key: 'toDate', width: 15 },
+        { header: 'Submission Date', key: 'submissionDate', width: 20 },
+    ];
+
+    try {
+        const tempWorkbook = new ExcelJS.Workbook();
+        await tempWorkbook.xlsx.readFile(filePath);
+        const worksheet = tempWorkbook.getWorksheet('Registrations');
+        if (worksheet) {
+            worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+                if (rowNumber > 1) {
+                    let rowData = {};
+                    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                        rowData[columns[colNumber - 1].key] = cell.value;
+                    });
+                    existingData.push(rowData);
+                }
+            });
+        }
+    } catch (error) { /* File doesn't exist, which is fine. */ }
+
+    const newData = {
+        ...data,
+        submissionDate: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+    };
+    existingData.push(newData);
+
+    const newWorkbook = new ExcelJS.Workbook();
+    const newWorksheet = newWorkbook.addWorksheet('Registrations');
+    newWorksheet.columns = columns;
+    newWorksheet.addRows(existingData);
+
+    try {
+        await newWorkbook.xlsx.writeFile(filePath);
+        console.log('✅ Excel sheet overwritten and saved successfully.');
+    } catch (writeError) {
+        console.error('❌ [Excel] CRITICAL ERROR: Failed to write to the Excel file.', writeError);
+    }
+}
+
+async function generateCertificate(data) {
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+
+    let htmlTemplate = await fs.readFile(certificateTemplatePath, 'utf8');
+    const cssContent = await fs.readFile(certificateCssPath, 'utf8');
+
+    // =================================================================
+    // === FIX: Embed images as Base64 data URLs =======================
+    // =================================================================
+    const msmeLogoPath = path.join(certificateDir, 'msme.jpeg');
+    const citdLogoPath = path.join(certificateDir, 'citd main.png'); // UPDATED FILENAME
+
+    const msmeLogoBase64 = await fs.readFile(msmeLogoPath, 'base64');
+    const citdLogoBase64 = await fs.readFile(citdLogoPath, 'base64');
+
+    const msmeDataUrl = `data:image/jpeg;base64,${msmeLogoBase64}`;
+    const citdDataUrl = `data:image/png;base64,${citdLogoBase64}`;
+
+    htmlTemplate = htmlTemplate
+        .replace('src="msme.jpeg"', `src="${msmeDataUrl}"`)
+        .replace('src="citd main.png"', `src="${citdDataUrl}"`); // UPDATED FILENAME
+    // =================================================================
+
+    const finalHtml = htmlTemplate.replace(
+        '</head>',
+        `<style>${cssContent}</style></head>`
+    );
+
+    await page.setContent(finalHtml, { waitUntil: 'networkidle0' });
+
+    await page.evaluate(data => {
+        const today = new Date();
+        const issueDate = `${String(today.getDate()).padStart(2, '0')}.${String(today.getMonth() + 1).padStart(2, '0')}.${today.getFullYear()}`;
+
+        document.getElementById('cert-gender').textContent = data.gender || '';
+        document.getElementById('cert-name').textContent = ` ${data.applicantName.toUpperCase()}`;
+        document.getElementById('cert-father').textContent = ` ${data.fatherName.toUpperCase()}`;
+        document.getElementById('cert-course').textContent = `INTERNSHIP PROGRAMME ON ${data.courseName.toUpperCase()}`;
+        document.getElementById('cert-start').textContent = data.fromDate;
+        document.getElementById('cert-end').textContent = data.toDate;
+        document.getElementById('cert-issue-date').textContent = issueDate;
+        
+        if (data.photo) {
+            const photoElem = document.getElementById('cert-photo');
+            if (photoElem) {
+                photoElem.src = data.photo;
+            }
+        }
+    }, data);
+
+    const pdfFileName = `Certificate-${data.applicantName.replace(/\s+/g, '_')}-${Date.now()}.pdf`;
+    const pdfPath = path.join(outputDir, pdfFileName);
+
+    await page.pdf({
+        path: pdfPath,
+        width: '1058px',
+        height: '748px',
+        printBackground: true,
+    });
+
+    await browser.close();
+    console.log(`✅ PDF certificate generated: ${pdfPath}`);
+    return pdfPath;
+}
+
+// 4. API Endpoint for Form Submission
+app.post('/api/submit-form', async (req, res) => {
+    console.log('\n-----------------------------------------');
+    console.log(`➡️ Received new form submission at ${new Date().toLocaleTimeString()}`);
+    try {
+        const formData = req.body;
+
+        console.log('➡️ Starting PDF generation...');
+        await generateCertificate(formData);
+        
+        console.log('➡️ Starting Excel sheet update...');
+        await updateExcelSheet(formData);
+        
+        console.log('🎉 All tasks completed successfully!');
+        res.status(200).json({ message: 'Registration successful! PDF and Excel sheet have been created.' });
+
+    } catch (error) {
+        console.error('❌ An error occurred during processing:', error);
+        res.status(500).json({ message: 'An error occurred on the server.', error: error.message });
+    } finally {
+        console.log('-----------------------------------------\n');
+    }
+});
+
+// 5. Start the Server
+app.listen(PORT, () => {
+    console.log(`✅ Server running on http://localhost:${PORT}`);
+    console.log(`➡️ Access your form at: http://localhost:${PORT}/application_form/index.html`);
+});
+
+
+application_from HTML : <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application for Short Term Courses - CITD</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="form-container">
+        <!-- Form Header -->
+        <header class="form-header">
+            <div class="logo-left">
+                <img src="msme.jpeg" alt="MSME Logo" onerror="this.onerror=null;this.src='https://placehold.co/80x80/cccccc/000000?text=MSME';">
+            </div>
+            <div class="header-text">
+                <h1>MSME TOOL ROOM, HYDERABAD</h1>
+                <h2>CENTRAL INSTITUTE OF TOOL DESIGN</h2>
+                <p>BALANAGAR, HYDERABAD – 500037.</p>
+                <p class="contact-info">
+                    <a href="http://www.citdindia.org">www.citdindia.org</a> Email: <a href="mailto:onlinetraining1@citdindia.org">onlinetraining1@citdindia.org</a>
+                </p>
+                <p class="iso-cert">(An ISO 9001:2015, ISO 14001:2004, 50001:2011 Certified Institution)</p>
+            </div>
+            <div class="logo-right">
+                 <img src="citd main.png" alt="CITD Logo" onerror="this.onerror=null;this.src='https://placehold.co/80x80/cccccc/000000?text=CITD';">
+            </div>
+        </header>
+
+        <div class="form-title">
+            <h3>APPLICATION FOR SHORT TERM COURSES</h3>
+        </div>
+
+        <!-- Main Form -->
+        <form id="registration-form" novalidate>
+            <div class="form-row initial-details">
+                <label for="admission_no">Admission No.</label>
+                <input type="text" id="admission_no" name="admission_no" class="dotted-input" style="width: 200px;">
+
+                <label for="sdmis_ref_no">SDMIS Ref No.</label>
+                <input type="text" id="sdmis_ref_no" name="sdmis_ref_no" class="dotted-input" style="width: 200px;">
+            </div>
+            <div class="form-row">
+                <label for="course-name">COURSE NAME</label>
+                <input type="text" id="course-name" name="course-name" class="dotted-input full-width" required>
+            </div>
+            <div class="form-row">
+                <label for="department">Department.</label>
+                <input type="text" id="department" name="department" class="dotted-input" style="width: 200px;">
+                <label for="duration">Duration</label>
+                <input type="text" id="duration" name="duration" class="dotted-input" style="width: 150px;">
+                <span>(From</span>
+                <input type="date" id="from-date" name="from-date" class="dotted-input" style="width: 150px;" required>
+                <span>To</span>
+                <input type="date" id="to-date" name="to-date" class="dotted-input" style="width: 150px;" required>
+            </div>
+
+            <div class="main-content-wrapper">
+                <div class="form-fields">
+                    <div class="form-row">
+                        <label for="applicant-name">1. Name as Per SSC<br>(in BLOCK LETTERS)</label>
+                        <input type="text" id="applicant-name" name="applicant-name" class="dotted-input" autocomplete="name" required>
+                    </div>
+                    <div class="form-row">
+                        <label for="dob">2. Date of Birth</label>
+                        <input type="date" id="dob" name="dob" class="dotted-input" autocomplete="bday">
+                        <label>Gender</label>
+                        <span>M <input type="radio" id="gender_male" name="gender" value="Mr." class="checkbox"></span>
+                        <span>F <input type="radio" id="gender_female" name="gender" value="Ms." class="checkbox"></span>
+                    </div>
+                    <div class="form-row">
+                        <label for="father-name">3. Father’s Name</label>
+                        <input type="text" id="father-name" name="father-name" class="dotted-input" autocomplete="name" required>
+                    </div>
+                     <div class="form-row">
+                        <label for="mother-name">4. Mother’s Name</label>
+                        <input type="text" id="mother-name" name="mother-name" class="dotted-input" autocomplete="name">
+                    </div>
+                    <div class="form-row address-row">
+                        <label for="address">5. Address for<br>(Correspondence / Permanent)</label>
+                        <textarea id="address" name="address" class="dotted-input" rows="3" autocomplete="street-address"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <label for="mobile">6. Mobile No.</label>
+                        <input type="tel" id="mobile" name="mobile" class="dotted-input" autocomplete="tel">
+                        <label for="email">E-mail – ID</label>
+                        <input type="email" id="email" name="email" class="dotted-input" autocomplete="email">
+                    </div>
+                    <div class="form-row">
+                        <label for="aadhar">7. UID (Aadhar No.)</label>
+                        <input type="text" id="aadhar" name="aadhar" class="dotted-input">
+                    </div>
+                    <div class="form-row caste-row">
+                        <label>8. Caste Category</label>
+                        <div class="caste-options">
+                            <span>GEN <input type="checkbox" name="caste" value="GEN" class="checkbox"></span>
+                            <span>BC <input type="checkbox" name="caste" value="BC" class="checkbox"></span>
+                            <span>SC <input type="checkbox" name="caste" value="SC" class="checkbox"></span>
+                            <span>ST <input type="checkbox" name="caste" value="ST" class="checkbox"></span>
+                            <span>MINORITY <input type="checkbox" name="caste" value="MINORITY" class="checkbox"></span>
+                            <span>PH <input type="checkbox" name="caste" value="PH" class="checkbox"></span>
+                        </div>
+                    </div>
+                </div>
+               <div class="photo-placeholder">
+                    <img id="preview" src="" alt="Photo Preview" style="display:none;" />
+                    <label for="fileUpload" class="custom-upload-btn">Choose File</label>
+                    <span id="fileName">No file chosen</span>
+                    <input type="file" id="fileUpload" name="photo" accept="image/*" style="display:none;">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label>9. Educational Qualifications</label>
+            </div>
+           <div class="education-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th>School / College / University</th>
+                            <th>Specialization</th>
+                            <th>Year of Passing</th>
+                            <th>Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" name="edu_course_1" class="table-input"></td>
+                            <td><input type="text" name="edu_school_1" class="table-input"></td>
+                            <td><input type="text" name="edu_spec_1" class="table-input"></td>
+                            <td><input type="text" name="edu_year_1" class="table-input"></td>
+                            <td><input type="text" name="edu_perc_1" class="table-input"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" name="edu_course_2" class="table-input"></td>
+                            <td><input type="text" name="edu_school_2" class="table-input"></td>
+                            <td><input type="text" name="edu_spec_2" class="table-input"></td>
+                            <td><input type="text" name="edu_year_2" class="table-input"></td>
+                            <td><input type="text" name="edu_perc_2" class="table-input"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-row">
+                <label for="course_fees">10. Course Fees (Rs.)</label>
+                <input type="text" id="course_fees" name="course_fees" class="dotted-input full-width">
+            </div>
+            <div class="form-row">
+                <label>11. Payment Details</label>
+            </div>
+            <div class="payment-details">
+                <div>
+                    <label for="payment_1_rs">1st Installment Rs:</label><input type="text" id="payment_1_rs" name="payment_1_rs" class="dotted-input">
+                    <label for="payment_1_receipt">Receipt No:</label><input type="text" id="payment_1_receipt" name="payment_1_receipt" class="dotted-input">
+                    <label for="payment_1_date">Date:</label><input type="text" id="payment_1_date" name="payment_1_date" class="dotted-input">
+                </div>
+                <div>
+                    <label for="payment_2_rs">2nd Installment Rs:</label><input type="text" id="payment_2_rs" name="payment_2_rs" class="dotted-input">
+                    <label for="payment_2_receipt">Receipt No:</label><input type="text" id="payment_2_receipt" name="payment_2_receipt" class="dotted-input">
+                    <label for="payment_2_date">Date:</label><input type="text" id="payment_2_date" name="payment_2_date" class="dotted-input">
+                </div>
+                <div>
+                    <label for="payment_3_rs">3rd Installment Rs:</label><input type="text" id="payment_3_rs" name="payment_3_rs" class="dotted-input">
+                    <label for="payment_3_receipt">Receipt No:</label><input type="text" id="payment_3_receipt" name="payment_3_receipt" class="dotted-input">
+                    <label for="payment_3_date">Date:</label><input type="text" id="payment_3_date" name="payment_3_date" class="dotted-input">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label for="placement_details">12. Placement Details after completion of the course:</label>
+                <input type="text" id="placement_details" name="placement_details" class="dotted-input full-width">
+            </div>
+
+            <div class="documents-list">
+                <h4>List of Documents to be submitted:</h4>
+                <div class="doc-options">
+                    <span><input type="checkbox" name="doc_qualifications" class="checkbox"> 1. Qualification certificates</span>
+                    <span><input type="checkbox" name="doc_aadhar" class="checkbox"> 2. Aadhar Card</span>
+                    <span><input type="checkbox" name="doc_caste" class="checkbox"> 3. Caste certificate for SC/ST/ PH students</span>
+                    <span><input type="checkbox" name="doc_photo" class="checkbox"> 4. Photo (2)</span>
+                    <span><input type="checkbox" name="doc_receipts" class="checkbox"> 5. Payment Receipts</span>
+                </div>
+                <p><strong>Note:</strong> All the above documents are to be sent to mail: <a href="mailto:onlinetraining1@citdindia.org">onlinetraining1@citdindia.org</a>.</p>
+            </div>
+
+            <div class="declaration">
+                <h4>DECLARATION</h4>
+                <p>I do hereby declare and confirm that the particulars furnished above are correct to the best of my knowledge and belief. In case, the above particulars are found incorrect or concealing the facts, my candidature may be cancelled at any stage without any notice.</p>
+                <p>I understand that, 90% of attendance in every subject/software is compulsory and I commit myself to adhere to the same for the completion of the course.</p>
+            </div>
+
+            <div class="signature-section">
+                <span>Date: ........................................</span>
+                <span>Signature of Trainee</span>
+            </div>
+            <div class="signature-section last-row">
+                <span>Trg. Counselor</span>
+                <span>In-charge Short Term Trg.</span>
+            </div>
+            
+            <button type="submit" class="submit-btn">Generate Certificate</button>
+        </form>
+    </div>
+
+    <!-- This script contains the corrected fetch URL -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Live preview for photo upload
+            const fileInput = document.getElementById('fileUpload');
+            const previewImg = document.getElementById('preview');
+            const fileNameSpan = document.getElementById('fileName');
+
+            fileInput.addEventListener('change', function () {
+                if (fileInput.files && fileInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        previewImg.style.display = 'block';
+                    };
+                    reader.readAsDataURL(fileInput.files[0]);
+                    fileNameSpan.textContent = fileInput.files[0].name;
+                } else {
+                    previewImg.src = '';
+                    previewImg.style.display = 'none';
+                    fileNameSpan.textContent = 'No file chosen';
+                }
+            });
+
+            // Handle form submission
+            const form = document.getElementById('registration-form');
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+
+                const submitButton = form.querySelector('.submit-btn');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Processing...';
+
+                // Create a data object with all form values
+                const studentData = {
+                    admission_no: document.getElementById('admission_no').value,
+                    courseName: document.getElementById('course-name').value,
+                    applicantName: document.getElementById('applicant-name').value,
+                    fatherName: document.getElementById('father-name').value,
+                    fromDate: document.getElementById('from-date').value,
+                    toDate: document.getElementById('to-date').value,
+                    email: document.getElementById('email').value,
+                    mobile: document.getElementById('mobile').value,
+                    gender: document.querySelector('input[name="gender"]:checked') ?
+                            document.querySelector('input[name="gender"]:checked').value :
+                            'Mr./Ms.',
+                    photo: previewImg.src.startsWith('data:image') ? previewImg.src : '',
+                };
+
+                try {
+                    // THIS IS THE CORRECTED URL
+                    const response = await fetch('/api/submit-form', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(studentData),
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        alert('Registration Successful!\n' + result.message);
+                        form.reset();
+                        previewImg.src = '';
+                        previewImg.style.display = 'none';
+                        fileNameSpan.textContent = 'No file chosen';
+                    } else {
+                        throw new Error(result.message || 'An unknown error occurred.');
+                    }
+                } catch (error) {
+                    console.error('Submission failed:', error);
+                    alert('Submission Failed:\n' + error.message);
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Generate Certificate';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+application form css : /* style.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #dcdcdc;
+    color: #000;
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    line-height: 1.6;
+}
+
+.form-container {
+    width: 850px;
+    background-color: #fff;
+    padding: 2rem;
+    border: 2px solid #000;
+}
+
+/* Header Styles */
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #000;
+}
+.logo-left, .logo-right {
+    flex: 1;
+}
+.logo-left img, .logo-right img {
+    width: 80px;
+    height: 80px;
+}
+.header-text {
+    flex: 4;
+}
+.header-text h1, .header-text h2 {
+    font-weight: bold;
+    margin: 0;
+}
+.header-text h1 {
+    font-size: 1.2rem;
+}
+.header-text h2 {
+    font-size: 1.4rem;
+}
+.header-text p {
+    margin: 0.2rem 0;
+    font-size: 0.9rem;
+}
+.contact-info a {
+    color: blue;
+    text-decoration: underline;
+}
+.iso-cert {
+    font-size: 0.8rem !important;
+}
+
+/* Form Title */
+.form-title {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+.form-title h3 {
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 5px;
+    display: inline-block;
+}
+
+/* General Form Styles */
+form {
+    font-size: 0.9rem;
+}
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.form-row label {
+    white-space: nowrap;
+}
+.dotted-input, .table-input, textarea.dotted-input {
+    border: none;
+    border-bottom: 1px dotted #000;
+    padding: 2px;
+    font-size: 0.9rem;
+    background-color: transparent;
+}
+.full-width {
+    flex-grow: 1;
+}
+.checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #000;
+    vertical-align: middle;
+}
+
+.main-content-wrapper {
+    display: flex;
+    gap: 1rem;
+}
+.form-fields {
+    flex: 3;
+}
+.photo-placeholder {
+    flex:  30px; /* smaller width */
+    border: 2px solid #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    width: 130px;
+    padding: 0.5rem;
+    height: 180px; /* taller */
+}
+
+.photo-placeholder img {
+    max-width: 130%;
+    max-height: 120px;
+    object-fit: cover;
+    margin-bottom: 7px;
+}
+
+.custom-upload-btn {
+    background-color: #ddd;
+    padding: 5px 10px;
+    border: 1px solid #000;
+    cursor: pointer;
+    margin-bottom: 5px;
+}
+
+#fileName {
+    font-size: 0.8rem;
+    color: #333;
+}
+
+
+.address-row {
+    align-items: flex-start;
+}
+.address-row textarea {
+    flex-grow: 1;
+}
+.caste-options {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Table Styles */
+.education-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+.education-table th, .education-table td {
+    border: 1px solid #000;
+    padding: 5px;
+    text-align: center;
+}
+.education-table th {
+    font-weight: normal;
+}
+.table-input {
+    width: 98%;
+    border: none;
+}
+
+/* Payment Details */
+.payment-details {
+    padding-left: 20px;
+}
+.payment-details > div {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr auto 1fr;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+/* Documents & Declaration */
+.documents-list, .declaration {
+    margin: 1.5rem 0;
+}
+.documents-list h4, .declaration h4 {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+.doc-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    margin-bottom: 10px;
+}
+.declaration p {
+    margin-bottom: 10px;
+    text-align: justify;
+}
+
+/* Signature Section */
+.signature-section {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+    font-weight: bold;
+}
+.last-row {
+    margin-top: 3rem;
+}
+
+
+certificate html : 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate - Central Institute of Tool Design</title>
+<link rel="stylesheet" href="certificate.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman&family=Arial&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Certificate Container -->
+    <div class="certificate-container">
+        
+        <p class="serial-no-top-left">S.NO:000819/25-26 <span id="cert-serial"></span></p>
+        <p class="cert-code-top-right">CF/TRG/17</p>
+
+        <!-- Header Section -->
+        <header class="header-section">
+            <div class="header-left"></div>
+            <div class="header-center">
+                <p class="text-2xl">MSME-TOOL ROOM, HYDERABAD</p>
+                <h1 class="text-xl">CENTRAL INSTITUTE OF TOOL DESIGN</h1>
+                <p class="text-sm">(A GOVT. OF INDIA SOCIETY, MINISTRY OF MSME)</p>
+                <p class="text-sm">BALANAGAR, HYDERABAD # 500 037 (T.S.) INDIA</p>
+                <p class="text-xs">(An ISO 9001: 2015, ISO 14001:2015 & ISO 50001:2018Certified Institute)</p>
+            </div>
+            <div class="header-right"></div>
+        </header>
+        
+        <!-- Logos -->
+        <img src="msme.jpeg" alt="MSME Logo" class="logo-msme">
+        <img src="citd main.png" alt="CITD Logo" class="logo-citd">
+
+        <!-- Main Content Section -->
+        <main class="main-content">
+            <h2 class="certificate-title">CERTIFICATE</h2>
+            
+            <p class="certificate-text">
+                This is to certify that <span id="cert-gender"></span> <span class="font-bold" id="cert-name"></span> 
+                S/o / D/o. <span class="font-bold" id="cert-father"></span> is awarded this certificate in recognition
+            </p>
+            <p class="certificate-text">of his/her participation in</p>
+
+            <h3 class="course-title" id="cert-course">INTERNSHIP PROGRAMME ON</h3>
+            
+            <p class="certificate-text">
+                From <span class="font-bold date" id="cert-start"></span> 
+                to <span class="font-bold date" id="cert-end"></span>
+            </p>
+
+            <p class="font-bold certificate-text" id="cert-mode">Part Time Course</p>
+        </main>
+
+        <!-- Footer Section -->
+        <footer class="footer-section">
+            <div class="footer-left">
+                 <div class="photo-placeholder">
+                     <img src="https://placehold.co/96x128/cccccc/969696?text=Photo" alt="Recipient Photo" class="recipient-photo" id="cert-photo">
+                 </div>
+                 <div class="signature-box">Student's Signature</div>
+                 <p class="text-sm date-issue">Date of issue: <span id="cert-issue-date"></span></p>
+            </div>
+
+            <div class="footer-center">
+                 <div class="signature-block">
+                     <p class="font-bold text-sm sanath down">G SANATH KUMAR</p>
+                     <p class="sanath text-sm">Deputy Director (Trg.)</p>
+                 </div>
+            </div>
+            <div class="footer-right">
+                <p class="seal-text text-lg">Given under the seal of the Institute</p>
+            </div>
+
+            <div class="director-block">
+                <p class="font-bold text-sm director-name">Dr. T VIJAY KRISHNA KANTH</p>
+                <p class="text-sm director-designation">Principal Director</p>
+            </div>
+        </footer>
+    </div>
+
+</body>
+</html>
+
+
+
+certificate css: /* --- Base and Font Styles --- */
+body {
+    font-family: 'Times New Roman', Times, serif;
+    background-color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 1rem;
+}
+
+.font-bold { font-weight: 700; }
+.text-xs { font-size: 0.75rem; line-height: 1rem; color: crimson; }
+.text-sm { font-size: 0.75rem; line-height: 1.25rem; }
+.text-lg { font-size: 0.9rem; line-height: 1.75rem; }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; font-weight: 700; color: crimson; }
+.text-xl { font-size: 1.2rem; line-height: 1rem; font-weight: 400; }
+
+/* --- Certificate Container --- */
+.certificate-container {
+    width: 297mm;        /* A4 width in landscape */
+    height: 210mm;       /* A4 height */
+    background-color: #fdfbf2;
+    margin: 0;
+    border: none;        /* removed border */
+    padding: 0;          /* no padding so it fills full page */
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    box-sizing: border-box;
+    page-break-inside: avoid;
+    overflow: hidden;
+}
+
+/* --- Header Section --- */
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    color: #374151;
+    text-align: center;
+    margin-top: 2rem;
+}
+.header-left, .header-right {
+    flex: 1;
+    font-family: 'Arial', sans-serif;
+    font-size: 0.875rem;
+}
+.header-left { text-align: left; }
+.header-right { text-align: right; }
+.header-center {
+    flex: 3;
+    font-family: 'Arial', sans-serif;
+}
+.header-center p, .header-center h1 {
+    margin: 2px 0;
+    line-height: 1.3;
+}
+.header-center h1 {
+    font-family: 'Times New Roman', Times, serif;
+}
+
+/* --- Logos --- */
+.logo-msme, .logo-citd {
+    position: absolute;
+}
+.logo-msme {
+    top: 3rem; 
+    left: 2rem;
+    width: 6rem;
+    height: 6rem;
+}
+.logo-citd {
+    top: 2.7rem;
+    right: 2rem;
+    width: 6rem;
+    height: 6rem;
+}
+
+/* --- Main Content --- */
+.main-content {
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* move content towards top */
+    color: #374151;
+    margin-top: 5rem; /* reduced from 4rem */
+}
+.certificate-title {
+    font-size: 1.2rem;
+    line-height: 2rem;
+    font-weight: 600;
+    font-family: 'Times New Roman', Times, serif;
+    margin-bottom: 2rem;
+    color: crimson;
+}
+.certificate-text {
+    font-size: 1.125rem;
+    line-height: 1.6;
+    font-family: 'Times New Roman', Times, serif;
+    margin: 0.25rem 0;
+}
+.course-title {
+    font-size: 1rem;
+    line-height: 2rem;
+    font-weight: 600;
+    font-family: 'Times New Roman', Times, serif;
+    color: crimson;
+}
+
+/* --- Footer Section --- */
+.footer-section {
+    position: absolute;
+    bottom: 1rem;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between; 
+    align-items: flex-end; 
+}
+.footer-left {
+    text-align: center; 
+    position: relative;
+}
+.photo-placeholder {
+    width: 9rem;
+    height: 9rem;
+    background-color: #e5e7eb;
+    border: 2px dashed #9ca3af;
+    margin: 0;               /* remove auto margins */
+    position: relative;      
+    top: -10rem;                  /* move to top */
+    right: -7rem;            /* adjust to move it right */
+}
+.recipient-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.signature-box {
+    width: 3.9cm;
+    height: 1cm;
+    border: 1px solid #000;
+    margin: 0 auto 0 auto;    /* remove top margin */
+    text-align: center;
+    font-size: 0.7rem;
+    font-family: 'Times New Roman', serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+
+    position: relative;       /* enable top/left adjustments */
+    top: -10rem;               /* move it 1rem upwards */
+    left: 7rem;               /* move it 3rem to the right */
+}
+.date-issue {
+    position: relative; /* or absolute if needed */
+    top: -2rem;             /* push to top of its container */
+    text-align: left; 
+    margin: 0;          /* remove previous top/bottom margins */
+    font-size: 0.9rem;  /* adjust size if needed */
+    right : -6rem;
+}
+
+.footer-center {
+    text-align: center;
+    align-self: flex-start;
+    padding-bottom: 0.54rem; 
+    margin-top: 13rem;
+    position: relative;
+    left: -4rem; /* moves it to the left */
+}
+.footer-right {
+    display: flex;
+    gap: 2rem;
+    text-align: center;
+    align-self: flex-start; 
+    margin-top: 3rem; 
+}
+.signature-block {
+    font-family: 'Times New Roman', Times, serif;
+    text-align: center; 
+}
+.signature-block .dowm {
+    margin-bottom: 1.6rem;     
+    margin-top: -1rem;     
+
+}
+
+/* --- Positioned Text --- */
+.serial-no-top-left {
+    position: absolute;
+    top: 1.1rem; 
+    left: 2rem; 
+    font-family: 'Arial', sans-serif;
+    font-size: 0.56rem;
+    font-weight: 700;
+    color: #374151;
+}
+.cert-code-top-right {
+    position: absolute;
+    top: 1.1rem; 
+    right: 2rem;
+    width: 6rem; 
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+    font-size: 0.56rem;
+    font-weight: 700;
+    color: #374151;
+}
+.date { margin: 0 4px; }
+.sanath { margin-right: -33rem;
+margin-left: 5rem;  }
+
+/* --- Print Settings --- */
+@page {
+    size: A4 landscape;
+    margin: 10mm;
+}
+@media print {
+    body {
+        background: white;
+        margin: 0;
+        padding: 0;
+    }
+}
+
+/* --- Custom Elements --- */
+.seal-text {
+    position: relative;
+    top: 2rem;   
+    left: 6rem;    
+}
+.director-text {
+    margin-top: 1rem; 
+    text-align: right; 
+    position: relative;
+    left: 16rem;        
+}
+.director-designation {
+    font-size: 0.8rem;
+    margin-top: 0.2rem;
+    display: block;
+    text-align: center;
+    position: relative;
+    left: 12rem;
+}
+.seal-text {
+    font-size: 1.2rem;
+    position: relative;
+    top: 0;    /* adjust up/down */
+    left: 17rem;   /* adjust left/right */
+    text-align: right; /* or center, as needed */
+}
+
+.director-block {
+    position: relative;
+    margin-top: 1rem; /* spacing below seal */
+    text-align: right; /* keeps name + designation aligned */
+}
+
+.director-name {
+    font-weight: bold;
+    position: relative;
+    left: -8rem;   /* move left, adjust value as needed */
+  top:-1rem;
+}
+
+
+.director-designation {
+    font-size: 0.8rem;
+    margin-top: 0.2rem;
+    position: relative;
+    left: -8rem;  
+  top:-0.8rem;/* move left, adjust value */
+}
+
+
+@page {
+    size: A4 landscape;
+    margin: 0;   /* removes browser’s default white margins */
+}
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+        background: white;
+    }
+    .certificate-container {
+        width: 297mm;
+        height: 210mm;
+        page-break-inside: avoid;
+    }
+}

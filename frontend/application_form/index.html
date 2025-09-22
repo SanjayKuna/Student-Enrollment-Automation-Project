@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application for Short Term Courses - CITD</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="form-container">
+        <header class="form-header">
+            <div class="logo-left">
+                <img src="msme.png" alt="MSME Logo" onerror="this.onerror=null;this.src='https://placehold.co/80x80/cccccc/000000?text=MSME';">
+            </div>
+            <div class="header-text">
+                <h1>MSME TOOL ROOM, HYDERABAD</h1>
+                <h2>CENTRAL INSTITUTE OF TOOL DESIGN</h2>
+                <p>BALANAGAR, HYDERABAD – 500037.</p>
+                <p class="contact-info">
+                    <a href="http://www.citdindia.org">www.citdindia.org</a> Email: <a href="mailto:onlinetraining1@citdindia.org">onlinetraining1@citdindia.org</a>
+                </p>
+                <p class="iso-cert">(An ISO 9001:2015, ISO 14001:2004, 50001:2011 Certified Institution)</p>
+            </div>
+            <div class="logo-right">
+                 <img src="citd main.png" alt="CITD Logo" onerror="this.onerror=null;this.src='https://placehold.co/80x80/cccccc/000000?text=CITD';">
+            </div>
+        </header>
+
+        <div class="form-title">
+            <h3>APPLICATION FOR SHORT TERM COURSES</h3>
+        </div>
+
+        <form id="registration-form" novalidate>
+            <div class="form-row initial-details">
+                <label for="admission_no">Admission No.</label>
+                <input type="text" id="admission_no" name="admission_no" class="dotted-input office-use" placeholder="(Office use only)" disabled>
+
+                <label for="sdmis_ref_no">SDMIS Ref No.</label>
+                <input type="text" id="sdmis_ref_no" name="sdmis_ref_no" class="dotted-input office-use" placeholder="(Office use only)" disabled>
+            </div>
+            
+            <div class="form-row">
+                <label for="course-name">COURSE NAME</label>
+                <input type="text" id="course-name" name="course-name" class="dotted-input full-width" required>
+            </div>
+            <div class="form-row">
+                <label for="department">Department.</label>
+                <input type="text" id="department" name="department" class="dotted-input" style="width: 200px;">
+                <label for="duration">Duration</label>
+                <input type="text" id="duration" name="duration" class="dotted-input" style="width: 150px;">
+                <span>(From</span>
+                <input type="date" id="from-date" name="from-date" class="dotted-input" style="width: 150px;" required>
+                <span>To</span>
+                <input type="date" id="to-date" name="to-date" class="dotted-input" style="width: 150px;" required>
+            </div>
+
+            <div class="main-content-wrapper">
+                <div class="form-fields">
+                    <div class="form-row">
+                        <label for="applicant-name">1. Name as Per SSC<br>(in BLOCK LETTERS)</label>
+                        <input type="text" id="applicant-name" name="applicant-name" class="dotted-input" autocomplete="name" required>
+                    </div>
+                    <div class="form-row">
+                        <label for="dob">2. Date of Birth</label>
+                        <input type="date" id="dob" name="dob" class="dotted-input" autocomplete="bday" required>
+                        <label>Gender</label>
+                        <span>M <input type="radio" id="gender_male" name="gender" value="Mr." class="checkbox" required></span>
+                        <span>F <input type="radio" id="gender_female" name="gender" value="Ms." class="checkbox"></span>
+                    </div>
+                    <div class="form-row">
+                        <label for="father-name">3. Father’s Name</label>
+                        <input type="text" id="father-name" name="father-name" class="dotted-input" autocomplete="name" required>
+                    </div>
+                     <div class="form-row">
+                        <label for="mother-name">4. Mother’s Name</label>
+                        <input type="text" id="mother-name" name="mother-name" class="dotted-input" autocomplete="name">
+                    </div>
+                    <div class="form-row address-row">
+                        <label for="address">5. Address for<br>(Correspondence / Permanent)</label>
+                        <textarea id="address" name="address" class="dotted-input" rows="3" autocomplete="street-address"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <label for="mobile">6. Mobile No.</label>
+                        <input type="tel" id="mobile" name="mobile" class="dotted-input" autocomplete="tel" required>
+                        <label for="email">E-mail – ID</label>
+                        <input type="email" id="email" name="email" class="dotted-input" autocomplete="email" required>
+                    </div>
+                    <div class="form-row">
+                        <label for="aadhar">7. UID (Aadhar No.)</label>
+                        <input type="text" id="aadhar" name="aadhar" class="dotted-input" required>
+                    </div>
+                    <div class="form-row caste-row">
+                        <label>8. Caste Category</label>
+                        <div class="caste-options">
+                            <span>GEN <input type="radio" name="caste" value="GEN" class="checkbox" required></span>
+                            <span>BC <input type="radio" name="caste" value="BC" class="checkbox"></span>
+                            <span>SC <input type="radio" name="caste" value="SC" class="checkbox"></span>
+                            <span>ST <input type="radio" name="caste" value="ST" class="checkbox"></span>
+                            <span>MINORITY <input type="radio" name="caste" value="MINORITY" class="checkbox"></span>
+                            <span>PH <input type="radio" name="caste" value="PH" class="checkbox"></span>
+                        </div>
+                    </div>
+                </div>
+               <div class="photo-placeholder">
+                    <img id="preview" src="" alt="Photo Preview" style="display:none;" />
+                    <label for="fileUpload" class="custom-upload-btn">Choose File</label>
+                    <span id="fileName">No file chosen</span>
+                    <input type="file" id="fileUpload" name="photo" accept="image/*" style="display:none;" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <label>9. Educational Qualifications</label>
+            </div>
+           <div class="education-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Highest Qualification</th>
+                            <th>Institution Name</th>
+                            <th>Specialization/Branch</th>
+                            <th>Year of Passing</th>
+                            <th>%/CGPA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" name="edu_course" class="table-input"></td>
+                            <td><input type="text" name="edu_school" class="table-input"></td>
+                            <td><input type="text" name="edu_spec" class="table-input"></td>
+                            <td><input type="text" name="edu_year" class="table-input"></td>
+                            <td><input type="text" name="edu_perc" class="table-input"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-row">
+                <label for="course_fees">10. Course Fees (Rs.)</label>
+                <input type="text" id="course_fees" name="course_fees" class="dotted-input full-width">
+            </div>
+            <div class="form-row">
+                <label>11. Payment Details</label>
+            </div>
+            <div class="payment-details">
+                <div>
+                    <label for="payment_1_rs">1st Installment Rs:</label><input type="text" id="payment_1_rs" name="payment_1_rs" class="dotted-input">
+                    <label for="payment_1_receipt">Receipt No:</label><input type="text" id="payment_1_receipt" name="payment_1_receipt" class="dotted-input">
+                    <label for="payment_1_date">Date:</label><input type="text" id="payment_1_date" name="payment_1_date" class="dotted-input">
+                </div>
+                <div>
+                    <label for="payment_2_rs">2nd Installment Rs:</label><input type="text" id="payment_2_rs" name="payment_2_rs" class="dotted-input">
+                    <label for="payment_2_receipt">Receipt No:</label><input type="text" id="payment_2_receipt" name="payment_2_receipt" class="dotted-input">
+                    <label for="payment_2_date">Date:</label><input type="text" id="payment_2_date" name="payment_2_date" class="dotted-input">
+                </div>
+                <div>
+                    <label for="payment_3_rs">3rd Installment Rs:</label><input type="text" id="payment_3_rs" name="payment_3_rs" class="dotted-input">
+                    <label for="payment_3_receipt">Receipt No:</label><input type="text" id="payment_3_receipt" name="payment_3_receipt" class="dotted-input">
+                    <label for="payment_3_date">Date:</label><input type="text" id="payment_3_date" name="payment_3_date" class="dotted-input">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label for="placement_details">12. Placement Details after completion of the course:</label>
+                <input type="text" id="placement_details" name="placement_details" class="dotted-input full-width">
+            </div>
+
+            <div class="documents-list">
+                <h4>List of Documents to be submitted:</h4>
+                <div class="doc-options">
+                    <span><input type="checkbox" name="doc_qualifications" class="checkbox"> 1. Qualification certificates</span>
+                    <span><input type="checkbox" name="doc_aadhar" class="checkbox"> 2. Aadhar Card</span>
+                    <span><input type="checkbox" name="doc_caste" class="checkbox"> 3. Caste certificate for SC/ST/ PH students</span>
+                    <span><input type="checkbox" name="doc_photo" class="checkbox"> 4. Photo (2)</span>
+                    <span><input type="checkbox" name="doc_receipts" class="checkbox"> 5. Payment Receipts</span>
+                </div>
+                <p><strong>Note:</strong> All the above documents are to be sent to mail: <a href="mailto:onlinetraining1@citdindia.org">onlinetraining1@citdindia.org</a>(Please use your name as the subject line of the email).</p>
+            </div>
+
+            <div class="declaration">
+                <h4>DECLARATION</h4>
+                <p>I do hereby declare and confirm that the particulars furnished above are correct to the best of my knowledge and belief. In case, the above particulars are found incorrect or concealing the facts, my candidature may be cancelled at any stage without any notice.</p>
+                <p>I understand that, 90% of attendance in every subject/software is compulsory and I commit myself to adhere to the same for the completion of the course.</p>
+            </div>
+
+            <div class="signature-section">
+                <span>Date: ........................................</span>
+                <span>Signature of Trainee</span>
+            </div>
+            <div class="signature-section last-row">
+                <span>Trg. Counselor</span>
+                <span>In-charge Short Term Trg.</span>
+            </div>
+            
+            <button type="submit" class="submit-btn">Submit Form</button>
+        </form>
+    </div>
+
+ <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('fileUpload');
+        const previewImg = document.getElementById('preview');
+        const fileNameSpan = document.getElementById('fileName');
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block';
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+                fileNameSpan.textContent = fileInput.files[0].name;
+            } else {
+                previewImg.src = '';
+                previewImg.style.display = 'none';
+                fileNameSpan.textContent = 'No file chosen';
+            }
+        });
+
+        const form = document.getElementById('registration-form');
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            // === NEW VALIDATION LOGIC ===
+            const requiredFields = [
+                { id: 'course-name', name: 'Course Name' },
+                { id: 'applicant-name', name: 'Name' },
+                { id: 'dob', name: 'Date of Birth' },
+                { nameAttr: 'gender', name: 'Gender' },
+                { id: 'father-name', name: 'Father\'s Name' },
+                { id: 'mobile', name: 'Mobile No' },
+                { id: 'fileUpload', name: 'Photo' },
+                { id: 'email', name: 'Email ID' },
+                { id: 'aadhar', name: 'UID (Aadhar No.)' },
+                { nameAttr: 'caste', name: 'Caste Category' },
+                { nameAttr: 'doc_', name: 'at least one Document' }
+            ];
+
+            let missingFields = [];
+
+            requiredFields.forEach(field => {
+                let isMissing = false;
+                if (field.id) {
+                    const element = document.getElementById(field.id);
+                    if (element.type === 'file') {
+                        if (element.files.length === 0) isMissing = true;
+                    } else if (!element.value.trim()) {
+                        isMissing = true;
+                    }
+                } else if (field.nameAttr) {
+                    if (field.nameAttr.startsWith('doc_')) {
+                        const checkedDocs = document.querySelectorAll('input[name^="doc_"]:checked');
+                        if (checkedDocs.length === 0) isMissing = true;
+                    } else {
+                        const checkedRadio = document.querySelector(`input[name="${field.nameAttr}"]:checked`);
+                        if (!checkedRadio) isMissing = true;
+                    }
+                }
+                if (isMissing) {
+                    missingFields.push(field.name);
+                }
+            });
+
+            if (missingFields.length > 0) {
+                // Remove duplicates for a cleaner message
+                const uniqueMissing = [...new Set(missingFields)];
+                alert(`Please fill out the following required fields:\n- ${uniqueMissing.join('\n- ')}`);
+                return; // Stop the form submission
+            }
+            // ============================
+
+
+            const submitButton = form.querySelector('.submit-btn');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Processing...';
+            
+            const studentData = {
+                admission_no: document.getElementById('admission_no').value,
+                sdmis_ref_no: document.getElementById('sdmis_ref_no').value,
+                courseName: document.getElementById('course-name').value,
+                department: document.getElementById('department').value,
+                duration: document.getElementById('duration').value,
+                applicantName: document.getElementById('applicant-name').value,
+                dob: document.getElementById('dob').value,
+                fatherName: document.getElementById('father-name').value,
+                motherName: document.getElementById('mother-name').value,
+                address: document.getElementById('address').value,
+                fromDate: document.getElementById('from-date').value,
+                toDate: document.getElementById('to-date').value,
+                email: document.getElementById('email').value,
+                mobile: document.getElementById('mobile').value,
+                aadhar: document.getElementById('aadhar').value,
+                gender: document.querySelector('input[name="gender"]:checked') ?
+                        document.querySelector('input[name="gender"]:checked').value : '',
+                photo: previewImg.src.startsWith('data:image') ? previewImg.src : '',
+                casteCategory: document.querySelector('input[name="caste"]:checked') ? document.querySelector('input[name="caste"]:checked').value : '',
+                course_fees: document.getElementById('course_fees').value,
+                education: [
+                    {
+                        course: document.querySelector('[name="edu_course"]').value,
+                        school: document.querySelector('[name="edu_school"]').value,
+                        spec: document.querySelector('[name="edu_spec"]').value,
+                        year: document.querySelector('[name="edu_year"]').value,
+                        perc: document.querySelector('[name="edu_perc"]').value,
+                    }
+                ]
+            };
+
+            try {
+                const response = await fetch('/api/submit-form', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', },
+                    body: JSON.stringify(studentData),
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Registration Successful!\n' + result.message);
+                    form.reset();
+                    previewImg.src = '';
+                    previewImg.style.display = 'none';
+                    fileNameSpan.textContent = 'No file chosen';
+                } else {
+                    throw new Error(result.message || 'An unknown error occurred.');
+                }
+            } catch (error) {
+                console.error('Submission failed:', error);
+                alert('Submission Failed:\n' + error.message);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Generate Certificate';
+            }
+        });
+    });
+</script>
+</body>
+</html>
+

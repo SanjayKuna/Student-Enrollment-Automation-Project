@@ -1,0 +1,12 @@
+# .env - Place this file in your /backend folder
+
+# Your Gmail address that will send the emails
+EMAIL_USER=sanjayzoro073@gmail.com
+
+# Your 16-character Gmail App Password
+# IMPORTANT: This is NOT your regular password.
+# See instructions on how to generate an App Password if you don't have one.
+EMAIL_PASS=dxytpgrvwcrsolnv
+
+# The email address of the faculty member who will receive the documents
+FACULTY_EMAIL=sanjaygoud073@gmail.com

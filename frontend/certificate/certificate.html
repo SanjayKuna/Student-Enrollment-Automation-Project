@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate - Central Institute of Tool Design</title>
+    <link rel="stylesheet" href="certificate.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman&family=Arial&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="certificate-container">
+        
+        <p class="serial-no-top-left">S.NO: <span id="cert-serial"></span>/25-26</p>
+        <p class="cert-code-top-right">CF/TRG/17</p>
+
+        <header class="header-section">
+            <div class="header-left"></div>
+            <div class="header-center">
+                <p class="text-2xl">MSME-TOOL ROOM, HYDERABAD</p>
+                <h1 class="text-xl">CENTRAL INSTITUTE OF TOOL DESIGN</h1>
+                <p class="text-sm">(A GOVT. OF INDIA SOCIETY, MINISTRY OF MSME)</p>
+                <p class="text-sm">BALANAGAR, HYDERABAD # 500 037 (T.S.) INDIA</p>
+                <p class="text-xs">(An ISO 9001: 2015, ISO 14001:2015 & ISO 50001:2018 Certified Institute)</p>
+            </div>
+            <div class="header-right"></div>
+        </header>
+        
+        <img src="msme.png" alt="MSME Logo" class="logo-msme">
+        <img src="citd main.png" alt="CITD Logo" class="logo-citd">
+
+        <main class="main-content">
+            <h2 class="certificate-title">CERTIFICATE</h2>
+            
+            <!-- This paragraph will be filled in dynamically by the server -->
+            <p class="certificate-text" id="cert-main-text"></p>
+
+            <p class="certificate-text">of his/her participation in</p>
+
+            <h3 class="course-title" id="cert-course">INTERNSHIP PROGRAMME ON</h3>
+            
+            <p class="certificate-text">
+                From <span class="font-nicee date" id="cert-start"></span> 
+                to <span class="font-nicee date" id="cert-end"></span>
+            </p>
+
+            <p class="font-bold certificate-text" id="cert-mode">Part Time Course</p>
+        </main>
+
+        <footer class="footer-section">
+            <div class="footer-left">
+                 <div class="photo-placeholder">
+                      <img src="https://placehold.co/96x128/cccccc/969696?text=Photo" alt="Recipient Photo" class="recipient-photo" id="cert-photo">
+                 </div>
+                 <div class="signature-box">Student's Signature</div>
+                 <p class="text-sm date-issue">Date of issue: <span id="cert-issue-date"></span></p>
+            </div>
+
+           <div class="footer-center">
+                <div class="signature-block">
+                    <p class="sanath-name">G SANATH KUMAR</p>
+                    <p class="sanath-designation">Deputy Director (Trg.)</p>
+                </div>
+           </div>
+            <div class="footer-right">
+                <p class="seal-text text-lg">Given under the seal of the Institute</p>
+            </div>
+
+            <div class="director-block">
+                <p class="font-bold text-sm director-name">Dr. T VIJAY KRISHNA KANTH</p>
+                <p class="text-sm director-designation">Principal Director</p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

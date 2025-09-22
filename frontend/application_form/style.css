@@ -1,0 +1,354 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #dcdcdc;
+    color: #000;
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    line-height: 1.6;
+}
+
+.form-container {
+    width: 100%;
+    max-width: 900px;
+    background: #fff;
+    padding: 0 2rem 2rem;
+    border: 2px solid #000;
+    margin: auto;
+}
+
+/* Header Styles */
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 1rem;
+    padding: 1rem 0 1rem 0;
+    border-bottom: 2px solid #000;
+}
+
+.logo-left, .logo-right {
+    flex: 1;
+}
+
+.logo-left img, .logo-right img {
+    width: 80px;
+    height: 80px;
+}
+
+.header-text {
+    flex: 4;
+}
+
+.header-text h1, .header-text h2 {
+    font-weight: bold;
+    margin: 0;
+}
+
+.header-text h1 {
+    font-size: 1.2rem;
+}
+
+.header-text h2 {
+    font-size: 1.4rem;
+}
+
+.header-text p {
+    margin: 0.2rem 0;
+    font-size: 0.9rem;
+}
+
+.contact-info a {
+    color: blue;
+    text-decoration: underline;
+}
+
+.iso-cert {
+    font-size: 0.75rem !important;
+}
+
+/* Form Title */
+.form-title {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.form-title h3 {
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 5px;
+    display: inline-block;
+}
+
+/* General Form Styles */
+form {
+    font-size: 0.9rem;
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.form-row label {
+    white-space: nowrap;
+}
+
+.dotted-input, .table-input, textarea.dotted-input {
+    border: none;
+    border-bottom: 1px dotted #000;
+    padding: 2px;
+    font-size: 0.9rem;
+    background-color: transparent;
+}
+
+.office-use {
+    background-color: #f0f0f0;
+    text-align: center;
+    color: #999;
+}
+
+.full-width {
+    flex-grow: 1;
+}
+
+.checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #000;
+    vertical-align: middle;
+}
+
+.main-content-wrapper {
+    display: flex;
+    gap: 1rem;
+}
+
+.form-fields {
+    flex: 3;
+}
+
+.form-fields .dotted-input {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.photo-placeholder {
+    flex: 0 0 130px;
+    border: 2px solid #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    width: 130px;
+    height: 180px;
+    padding: 0.5rem;
+    box-sizing: border-box;
+}
+
+.photo-placeholder img#preview {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    margin-bottom: 7px;
+}
+
+.custom-upload-btn {
+    background-color: #ddd;
+    padding: 5px 10px;
+    border: 1px solid #000;
+    cursor: pointer;
+    margin-bottom: 5px;
+}
+
+#fileName {
+    font-size: 0.8rem;
+    color: #333;
+}
+
+.address-row {
+    align-items: flex-start;
+}
+
+.address-row textarea {
+    flex-grow: 1;
+}
+
+.caste-options {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.caste-options span {
+    font-size: 0.8rem; 
+}
+
+
+/* Table Styles */
+.education-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.education-table th, .education-table td {
+    border: 1px solid #000;
+    padding: 5px;
+    text-align: center;
+}
+
+.education-table th {
+    font-weight: normal;
+}
+
+.table-input {
+    width: 98%;
+    border: none;
+}
+
+/* Payment Details */
+.payment-details {
+    padding-left: 20px;
+}
+
+.payment-details > div {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr auto 1fr;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+/* Documents & Declaration */
+.documents-list, .declaration {
+    margin: 1.5rem 0;
+}
+
+.documents-list h4, .declaration h4 {
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.doc-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    margin-bottom: 10px;
+}
+
+.declaration p {
+    margin-bottom: 10px;
+    text-align: justify;
+}
+
+/* Signature Section */
+.signature-section {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3.5rem; 
+    font-weight: bold;
+}
+
+.last-row {
+    margin-top: 6.5rem; 
+}
+
+.submit-btn {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    margin-top: 2rem;
+}
+
+.submit-btn:hover {
+    background-color: #0056b3;
+}
+
+.submit-btn:disabled {
+    background-color: #ccc;
+}
+
+/* --- OPTIMIZED PRINT STYLES --- */
+@media print {
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+
+    body {
+        background-color: #fff;
+        font-size: 9pt;
+        line-height: 1.25;
+        padding: 0;
+        margin: 0;
+    }
+
+    .form-container {
+        width: 100%;
+        max-width: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+
+    .submit-btn, .custom-upload-btn, #fileName {
+        display: none !important;
+    }
+
+    .form-header {
+        margin-bottom: 8px;
+        padding: 0 0 8px 0;
+    }
+
+    .logo-left img, .logo-right img {
+        width: 65px;
+        height: 65px;
+    }
+
+    .header-text h1 { font-size: 11pt; }
+    .header-text h2 { font-size: 13pt; }
+    .header-text p { margin: 1px 0; font-size: 8pt; }
+    .form-title { margin-bottom: 10px; }
+    .form-title h3 { font-size: 10pt; padding: 2px; }
+    .form-row, .payment-details > div { margin-bottom: 4px; gap: 8px; }
+    .dotted-input, .table-input, textarea.dotted-input { padding: 1px; font-size: 9pt; }
+    .main-content-wrapper { gap: 10px; }
+    .education-table table { margin: 8px 0; }
+    .education-table th, .education-table td { padding: 3px; }
+    .documents-list, .declaration { margin: 10px 0; }
+    .documents-list h4, .declaration h4 { margin-bottom: 5px; font-size: 9.5pt; }
+    .declaration p { margin-bottom: 4px; }
+    .doc-options { margin-bottom: 5px; gap: 5px 15px; }
+    
+    /* === THIS IS THE FIX === */
+    /* Increased the top margin to push the signatures down in the PDF */
+    .signature-section {
+        margin-top: 30px; /* Increased from 15px */
+    }
+
+    .last-row {
+        margin-top: 50px; /* Increased from 25px */
+    }
+    /* ======================= */
+
+    a {
+        color: #000 !important;
+        text-decoration: none !important;
+    }
+}
+
