@@ -1,27 +1,29 @@
-// server.js - DEPLOYMENT VERSION (with MongoDB & Cloudinary)
+// server.js - FINAL DEPLOYMENT VERSION
 
 // 1. Import necessary packages
 const express = require('express');
 const puppeteer = require('puppeteer');
-const mongoose = require('mongoose'); // For MongoDB
-const cloudinary = require('cloudinary').v2; // For Cloudinary
+const mongoose = require('mongoose');
+const cloudinary = require('cloudinary').v2;
 const path = require('path');
 const fs = require('fs').promises;
 const cors = require('cors');
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 const cron = require('node-cron');
-const ExcelJS = require('exceljs'); // Still needed for faculty report
+const ExcelJS = require('exceljs');
 require('dotenv').config();
 
-// 2. Initialize Express & Cloudinary
+// 2. Initialize Express, Cloudinary, and SendGrid
 const app = express();
-const PORT = process.env.PORT || 5000; // Use Render's port or 5000 locally
+const PORT = process.env.PORT || 5000;
 
 cloudinary.config({ 
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
-  api_key: process.env.CLOUDINARY_API_KEY, 
-  api_secret: process.env.CLOUDINARY_API_SECRET 
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
+    api_key: process.env.CLOUDINARY_API_KEY, 
+    api_secret: process.env.CLOUDINARY_API_SECRET 
 });
+
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 let fileQueue = [];
 
@@ -39,8 +41,8 @@ const registrationSchema = new mongoose.Schema({
     address: String, email: String, mobile: String, aadhar: String,
     fromDate: String, toDate: String, casteCategory: String, course_fees: String,
     education: [{ course: String, school: String, spec: String, year: String, perc: String }],
-    certificateUrl: String, // To store the permanent PDF link
-    applicationFormUrl: String, // To store the permanent PDF link
+    certificateUrl: String,
+    applicationFormUrl: String,
     submissionDate: { type: Date, default: Date.now }
 });
 
@@ -50,10 +52,13 @@ const Registration = mongoose.model('Registration', registrationSchema);
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
+
+// IMPORTANT: Correctly serve static files from the 'frontend' directory
+// This assumes your Dockerfile copies the 'frontend' folder to the root of the app directory
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 // Define paths
-const outputDir = path.join(__dirname, '..', 'output'); // Now a temporary folder
+const outputDir = path.join(__dirname, '..', 'output');
 const certificateDir = path.join(__dirname, '..', 'frontend', 'certificate');
 const certificateTemplatePath = path.join(certificateDir, 'certificate.html');
 const certificateCssPath = path.join(certificateDir, 'certificate.css');
@@ -77,14 +82,13 @@ async function getNextSerialNumber() {
     return nextNumber.toString().padStart(6, '0');
 }
 
-// NEW: Function to upload files to Cloudinary for permanent storage
 async function uploadToCloudinary(filePath, studentName) {
     try {
         const result = await cloudinary.uploader.upload(filePath, {
-            resource_type: 'raw', // Important for non-image files like PDFs
+            resource_type: 'raw',
             public_id: `citd-forms/${studentName}_${path.basename(filePath)}`,
         });
-        await fs.unlink(filePath); // Delete temporary local file after upload
+        await fs.unlink(filePath);
         console.log(`✅ Uploaded to Cloudinary: ${result.secure_url}`);
         return result.secure_url;
     } catch (error) {
@@ -108,7 +112,9 @@ async function generateCertificate(data) {
         .replace('src="msme.png"', `src="${msmeDataUrl}"`)
         .replace('src="citd main.png"', `src="${citdDataUrl}"`);
     const finalHtml = htmlTemplate.replace('</head>', `<style>${cssContent}</style></head>`);
-    await page.setContent(finalHtml, { waitUntil: 'networkidle0' });
+    
+    // CORRECTED: Use 'domcontentloaded' to prevent timeouts
+    await page.setContent(finalHtml, { waitUntil: 'domcontentloaded' });
 
     await page.evaluate(data => {
         const formatDate = (dateString) => {
@@ -161,10 +167,11 @@ async function generateApplicationFormPdf(data) {
         .replace('src="msme.png"', `src="${msmeDataUrl}"`)
         .replace('src="citd main.png"', `src="${citdDataUrl}"`);
     const finalHtml = htmlTemplate.replace('</head>', `<style>${cssContent}</style></head>`);
-    await page.setContent(finalHtml, { waitUntil: 'networkidle0' });
+    
+    // CORRECTED: Use 'domcontentloaded' to prevent timeouts
+    await page.setContent(finalHtml, { waitUntil: 'domcontentloaded' });
 
     await page.evaluate(data => {
-        // This function should contain all the logic to fill your form fields
         document.getElementById('course-name').value = data.courseName || '';
         document.getElementById('department').value = data.department || '';
         document.getElementById('duration').value = data.duration || '';
@@ -214,28 +221,30 @@ async function generateApplicationFormPdf(data) {
     return { path: pdfPath, url: await uploadToCloudinary(pdfPath, data.applicantName) };
 }
 
-
-// --- EMAIL FUNCTIONS ---
+// --- EMAIL FUNCTIONS (Updated for SendGrid) ---
 async function sendStudentEmail(data, applicationFormPath) {
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-    });
-    const mailOptions = {
-        from: `"CITD Hyderabad" <${process.env.EMAIL_USER}>`,
-        to: data.email,
-        subject: 'Application Received - CITD Short Term Course',
-        html: `<h3>Dear ${data.applicantName},</h3><p>Thank you for registering...</p>`,
-        attachments: [{
-            filename: path.basename(applicationFormPath),
-            path: applicationFormPath,
-        }],
-    };
     try {
-        await transporter.sendMail(mailOptions);
+        const attachmentContent = await fs.readFile(applicationFormPath);
+        const mailOptions = {
+            from: {
+                name: "CITD Hyderabad",
+                email: process.env.SENDER_EMAIL
+            },
+            to: data.email,
+            subject: 'Application Received - CITD Short Term Course',
+            html: `<h3>Dear ${data.applicantName},</h3><p>Thank you for registering... a copy of your form is attached.</p>`,
+            attachments: [{
+                content: attachmentContent.toString('base64'),
+                filename: path.basename(applicationFormPath),
+                type: 'application/pdf',
+                disposition: 'attachment',
+            }],
+        };
+        await sgMail.send(mailOptions);
         console.log(`✅ Confirmation email sent to student: ${data.email}`);
     } catch (error) {
         console.error(`❌ Failed to send email to student: ${data.email}`, error);
+        if (error.response) { console.error(error.response.body); }
     }
 }
 
@@ -245,62 +254,74 @@ async function sendBatchedFacultyEmail() {
         return;
     }
     console.log(`📧 Preparing to send batch email with ${fileQueue.length / 2} student(s) to faculty...`);
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-    });
     
-    // Create attachments from local file paths
-    const attachments = fileQueue.map(item => ({
-        filename: path.basename(item.path),
-        path: item.path,
-    }));
-    
-    // Generate a temporary Excel report from MongoDB data
-    const allRegistrations = await Registration.find({}).lean();
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Registrations');
-    worksheet.columns = [
-        { header: 'Serial No', key: 'serialNumber', width: 15 },
-        { header: 'Applicant Name', key: 'applicantName', width: 30 },
-        { header: 'Course Name', key: 'courseName', width: 30 },
-        { header: 'Email', key: 'email', width: 30 },
-        { header: 'Certificate URL', key: 'certificateUrl', width: 50 },
-        { header: 'Application URL', key: 'applicationFormUrl', width: 50 },
-    ];
-    worksheet.addRows(allRegistrations);
-    const tempExcelPath = path.join(outputDir, `report-${Date.now()}.xlsx`);
-    await workbook.xlsx.writeFile(tempExcelPath);
-
-    attachments.push({
-        filename: 'Master_Registration_Report.xlsx',
-        path: tempExcelPath,
-    });
-
-    const mailOptions = {
-        from: `"CITD Registration System" <${process.env.EMAIL_USER}>`,
-        to: process.env.FACULTY_EMAIL,
-        subject: `Student Registration Batch Report - ${new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}`,
-        html: `<h3>Batch Registration Report</h3><p>Please find attached documents for <strong>${fileQueue.length / 2}</strong> new student(s) who registered in this period.</p><p>The updated master registration report from the database is also attached.</p>`,
-        attachments: attachments,
-    };
     try {
-        await transporter.sendMail(mailOptions);
+        const attachments = await Promise.all(
+            fileQueue.map(async (item) => {
+                const content = await fs.readFile(item.path);
+                return {
+                    content: content.toString('base64'),
+                    filename: path.basename(item.path),
+                    type: 'application/pdf',
+                    disposition: 'attachment',
+                };
+            })
+        );
+        
+        const allRegistrations = await Registration.find({}).lean();
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Registrations');
+        worksheet.columns = [
+            { header: 'Serial No', key: 'serialNumber', width: 15 },
+            { header: 'Applicant Name', key: 'applicantName', width: 30 },
+            { header: 'Course Name', key: 'courseName', width: 30 },
+            { header: 'Email', key: 'email', width: 30 },
+            { header: 'Certificate URL', key: 'certificateUrl', width: 50 },
+            { header: 'Application URL', key: 'applicationFormUrl', width: 50 },
+        ];
+        worksheet.addRows(allRegistrations);
+        const tempExcelPath = path.join(outputDir, `report-${Date.now()}.xlsx`);
+        await workbook.xlsx.writeFile(tempExcelPath);
+
+        const excelContent = await fs.readFile(tempExcelPath);
+        attachments.push({
+            content: excelContent.toString('base64'),
+            filename: 'Master_Registration_Report.xlsx',
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            disposition: 'attachment',
+        });
+
+        const mailOptions = {
+            from: {
+                name: "CITD Registration System",
+                email: process.env.SENDER_EMAIL
+            },
+            to: process.env.FACULTY_EMAIL,
+            subject: `Student Registration Batch Report - ${new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}`,
+            html: `<h3>Batch Registration Report</h3><p>Please find attached documents for <strong>${fileQueue.length / 2}</strong> new student(s).</p>`,
+            attachments: attachments,
+        };
+
+        await sgMail.send(mailOptions);
         console.log('✅ Batch email sent successfully to faculty.');
-        // Clean up temporary files
+
         fileQueue.forEach(file => fs.unlink(file.path).catch(err => console.error(`Error deleting temp file: ${file.path}`, err)));
         await fs.unlink(tempExcelPath);
         fileQueue = [];
     } catch (error) {
         console.error('❌ CRITICAL ERROR: Failed to send batch email to faculty.', error);
+        if (error.response) { console.error(error.response.body); }
     }
 }
 
+// Redirect root to the application form
+app.get('/', (req, res) => {
+    res.redirect('/application_form/index.html');
+});
 
-// --- SCHEDULER ---
-cron.schedule('35 11 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-cron.schedule('55 11 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-console.log('🕒 Email scheduler is running. Batches will be sent at 11:35AM and 11:55 PM.');
+cron.schedule('45 14 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+cron.schedule('55 14 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+console.log('🕒 Email scheduler is running. Batches will be sent at 2:45 PM and 2:55 PM.');
 
 // --- API ENDPOINT ---
 app.post('/api/submit-form', async (req, res) => {
@@ -313,7 +334,6 @@ app.post('/api/submit-form', async (req, res) => {
         const certificate = await generateCertificate(fullFormData);
         const applicationForm = await generateApplicationFormPdf(fullFormData);
         
-        // Save URLs and data to MongoDB
         const dbData = { 
             ...fullFormData,
             certificateUrl: certificate.url,
@@ -339,5 +359,5 @@ app.post('/api/submit-form', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`✅ Server running on http://localhost:${PORT}`);
-    console.log(`➡️ Access your form at: http://localhost:${PORT}/application_form/index.html`);
+    // No need to log the full path anymore since we have the root redirect
 });
