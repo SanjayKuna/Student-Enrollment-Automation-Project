@@ -1,7 +1,7 @@
 # Use an official Node.js 18 image.
 FROM node:18-slim
 
-# Set the working directory inside the container
+# Set the main working directory
 WORKDIR /usr/src/app
 
 # Install all the system dependencies that Chromium needs to run
@@ -31,7 +31,6 @@ RUN apt-get update && apt-get install -y \
     libxcb1 \
     libxcomposite1 \
     libxcursor1 \
-
     libxdamage1 \
     libxext6 \
     libxfixes3 \
@@ -44,16 +43,24 @@ RUN apt-get update && apt-get install -y \
     wget \
     xdg-utils
 
-# Copy your package files
-COPY package*.json ./
+# --- IMPORTANT CHANGES START HERE ---
 
-# Install your project's dependencies (this will also download Chromium via Puppeteer)
+# Copy the frontend folder into the image
+COPY frontend/ ./frontend/
+
+# Copy the backend's package files
+COPY backend/package*.json ./backend/
+
+# Set the working directory to the backend folder
+WORKDIR /usr/src/app/backend
+
+# Install backend dependencies (this also downloads Chromium)
 RUN npm install
 
 # Copy the rest of your backend application code
-COPY . .
+COPY backend/ .
 
-# Tell Docker that your app runs on port 5000 (or whatever port you use)
+# Tell Docker that your app runs on a port
 EXPOSE 5000
 
 # The command to start your server
