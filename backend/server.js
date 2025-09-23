@@ -72,14 +72,17 @@ fs.mkdir(outputDir, { recursive: true });
 // --- HELPER FUNCTIONS ---
 
 async function getNextSerialNumber() {
-    let currentNumber;
-    try {
-        const data = await fs.readFile(serialNumberFilePath, 'utf8');
-        currentNumber = parseInt(data, 10);
-    } catch (error) { currentNumber = 818; }
-    const nextNumber = currentNumber + 1;
-    await fs.writeFile(serialNumberFilePath, nextNumber.toString(), 'utf8');
-    return nextNumber.toString().padStart(6, '0');
+  // Find the single registration with the highest serial number
+  const lastRegistration = await Registration.findOne().sort({ serialNumber: -1 });
+
+  let nextNumber = 819; // A default starting number if the database is empty
+
+  if (lastRegistration && lastRegistration.serialNumber) {
+    const lastNumber = parseInt(lastRegistration.serialNumber, 10);
+    nextNumber = lastNumber + 1;
+  }
+
+  return nextNumber.toString().padStart(6, '0');
 }
 
 async function uploadToCloudinary(filePath, studentName) {
