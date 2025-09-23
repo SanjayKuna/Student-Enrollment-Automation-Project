@@ -1,7 +1,7 @@
 # Use an official Node.js 18 image.
 FROM node:18-slim
 
-# Set the main working directory inside the container
+# Set the main working directory
 WORKDIR /usr/src/app
 
 # Install all the system dependencies that Chromium needs to run
@@ -43,6 +43,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     xdg-utils
 
+# --- IMPORTANT CHANGES START HERE ---
+
 # Copy the frontend folder into the image
 COPY frontend/ ./frontend/
 
@@ -58,7 +60,7 @@ RUN npm install
 # Copy the rest of your backend application code
 COPY backend/ .
 
-# Tell Docker that your app runs on a port (e.g., 5000)
+# Tell Docker that your app runs on a port
 EXPOSE 5000
 
 # The command to start your server
