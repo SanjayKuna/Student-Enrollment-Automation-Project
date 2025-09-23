@@ -91,7 +91,7 @@ async function uploadToCloudinary(filePath, studentName) {
             resource_type: 'raw',
             public_id: `citd-forms/${studentName}_${path.basename(filePath)}`,
         });
-        await fs.unlink(filePath);
+        // The file is no longer deleted here
         console.log(`✅ Uploaded to Cloudinary: ${result.secure_url}`);
         return result.secure_url;
     } catch (error) {
@@ -352,6 +352,9 @@ app.post('/api/submit-form', async (req, res) => {
         fileQueue.push({ type: 'application', path: applicationForm.path });
         
         console.log(`📥 Files for ${fullFormData.applicantName} added to the faculty email queue.`);
+
+        await fs.unlink(certificate.path);
+        await fs.unlink(applicationForm.path);
         res.status(200).json({ message: 'Registration successful!' });
 
     } catch (error) {
