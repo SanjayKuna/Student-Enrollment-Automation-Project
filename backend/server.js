@@ -298,9 +298,9 @@ async function sendBatchedFacultyEmail() {
 
 
 // --- SCHEDULER ---
-cron.schedule('46 0 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-cron.schedule('0 13 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-console.log('🕒 Email scheduler is running. Batches will be sent at 12:46 AM and 1:00 PM.');
+cron.schedule('35 11 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+cron.schedule('55 11 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+console.log('🕒 Email scheduler is running. Batches will be sent at 11:35AM and 11:55 PM.');
 
 // --- API ENDPOINT ---
 app.post('/api/submit-form', async (req, res) => {
