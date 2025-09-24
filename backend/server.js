@@ -88,7 +88,7 @@ async function getNextSerialNumber() {
 async function uploadToCloudinary(filePath, studentName) {
     try {
         const result = await cloudinary.uploader.upload(filePath, {
-            resource_type: 'raw',
+            resource_type: 'image',
             public_id: `citd-forms/${studentName}_${path.basename(filePath)}`,
         });
         // The file is no longer deleted here
@@ -322,9 +322,9 @@ app.get('/', (req, res) => {
     res.redirect('/application_form/index.html');
 });
 
-cron.schedule('45 14 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-cron.schedule('55 14 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-console.log('🕒 Email scheduler is running. Batches will be sent at 2:45 PM and 2:55 PM.');
+cron.schedule('15 0 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+cron.schedule('20 0 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+console.log('🕒 Email scheduler is running. Batches will be sent at 12:15 PM and 12:20 PM.');
 
 // --- API ENDPOINT ---
 app.post('/api/submit-form', async (req, res) => {
