@@ -323,7 +323,7 @@ app.get('/', (req, res) => {
 });
 
 cron.schedule('15 11 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-cron.schedule('30 11* * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+cron.schedule('30 11 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
 console.log('🕒 Email scheduler is running. Batches will be sent at 11:15 PM and 11:30 PM.');
 
 // --- API ENDPOINT ---
