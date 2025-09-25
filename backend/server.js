@@ -322,9 +322,9 @@ app.get('/', (req, res) => {
     res.redirect('/application_form/index.html');
 });
 
-cron.schedule('15 0 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-cron.schedule('20 0 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-console.log('🕒 Email scheduler is running. Batches will be sent at 12:15 PM and 12:20 PM.');
+cron.schedule('15 11 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+cron.schedule('30 11* * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+console.log('🕒 Email scheduler is running. Batches will be sent at 11:15 PM and 11:30 PM.');
 
 // --- API ENDPOINT ---
 app.post('/api/submit-form', async (req, res) => {
