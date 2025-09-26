@@ -88,9 +88,10 @@ async function getNextSerialNumber() {
 async function uploadToCloudinary(filePath, studentName) {
     try {
         const result = await cloudinary.uploader.upload(filePath, {
-            resource_type: 'image',
-            public_id: `citd-forms/${studentName}_${path.basename(filePath)}`,
-        });
+        resource_type: 'image',
+        public_id: `citd-forms/${studentName}_${path.basename(filePath)}`,
+        upload_preset: 'ip8faemc' // <-- ADD THIS LINE
+});
         // The file is no longer deleted here
         console.log(`✅ Uploaded to Cloudinary: ${result.secure_url}`);
         return result.secure_url;
@@ -263,14 +264,31 @@ async function sendBatchedFacultyEmail() {
         const allRegistrations = await Registration.find({}).lean();
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Registrations');
+
+        // --- UPDATED AND EXPANDED COLUMNS ---
         worksheet.columns = [
             { header: 'Serial No', key: 'serialNumber', width: 15 },
+            { header: 'Submission Date', key: 'submissionDate', width: 25 },
             { header: 'Applicant Name', key: 'applicantName', width: 30 },
-            { header: 'Course Name', key: 'courseName', width: 30 },
+            { header: 'Course Name', key: 'courseName', width: 40 },
+            { header: 'Department', key: 'department', width: 20 },
+            { header: 'Duration', key: 'duration', width: 15 },
+            { header: 'From Date', key: 'fromDate', width: 15 },
+            { header: 'To Date', key: 'toDate', width: 15 },
             { header: 'Email', key: 'email', width: 30 },
+            { header: 'Mobile', key: 'mobile', width: 20 },
+            { header: 'Gender', key: 'gender', width: 10 },
+            { header: 'Date of Birth', key: 'dob', width: 15 },
+            { header: 'Father Name', key: 'fatherName', width: 30 },
+            { header: 'Mother Name', key: 'motherName', width: 30 },
+            { header: 'Address', key: 'address', width: 50 },
+            { header: 'Aadhar', key: 'aadhar', width: 20 },
+            { header: 'Caste Category', key: 'casteCategory', width: 20 },
+            { header: 'Course Fees', key: 'course_fees', width: 15 },
             { header: 'Certificate URL', key: 'certificateUrl', width: 50 },
             { header: 'Application URL', key: 'applicationFormUrl', width: 50 },
         ];
+        
         worksheet.addRows(allRegistrations);
         const tempExcelPath = path.join(outputDir, `report-${Date.now()}.xlsx`);
         await workbook.xlsx.writeFile(tempExcelPath);
@@ -283,7 +301,6 @@ async function sendBatchedFacultyEmail() {
             disposition: 'attachment',
         }];
 
-        // --- NEW: Build an HTML list of links ---
         let studentLinksHtml = '<ul>';
         fileQueue.forEach(student => {
             studentLinksHtml += `
@@ -307,7 +324,7 @@ async function sendBatchedFacultyEmail() {
                    <p>Please find links for <strong>${fileQueue.length}</strong> new student(s) who registered in this period:</p>
                    ${studentLinksHtml}
                    <p>The updated master registration report from the database is also attached.</p>`,
-            attachments: attachments, // Only the Excel sheet is attached now
+            attachments: attachments,
         };
 
         await sgMail.send(mailOptions);
@@ -315,13 +332,12 @@ async function sendBatchedFacultyEmail() {
 
         // Clean up temporary Excel file
         await fs.unlink(tempExcelPath);
-        fileQueue = []; // Clear the queue
+        fileQueue = [];
     } catch (error) {
         console.error('❌ CRITICAL ERROR: Failed to send batch email to faculty.', error);
         if (error.response) { console.error(error.response.body); }
     }
 }
-
 // Redirect root to the application form
 app.get('/', (req, res) => {
     res.redirect('/application_form/index.html');
