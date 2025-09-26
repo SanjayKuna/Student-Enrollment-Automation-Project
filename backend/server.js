@@ -87,12 +87,14 @@ async function getNextSerialNumber() {
 
 async function uploadToCloudinary(filePath, studentName) {
     try {
-        // This is the fix: path.parse(filePath).name gets the filename WITHOUT the extension
         const fileNameWithoutExt = path.parse(filePath).name;
+
+        // NEW: Replace spaces with underscores and remove other unsafe characters
+        const safeStudentName = studentName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
 
         const result = await cloudinary.uploader.upload(filePath, {
             resource_type: 'image',
-            public_id: `citd-forms/${studentName}_${fileNameWithoutExt}`, // Use the name without extension
+            public_id: `citd-forms/${safeStudentName}_${fileNameWithoutExt}`, // Use the new safe name
             upload_preset: 'ip8faemc' // Make sure this is your actual preset name
         });
 
@@ -103,7 +105,6 @@ async function uploadToCloudinary(filePath, studentName) {
         return null;
     }
 }
-
 async function generateCertificate(data) {
     const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
     const page = await browser.newPage();
