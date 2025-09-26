@@ -87,12 +87,15 @@ async function getNextSerialNumber() {
 
 async function uploadToCloudinary(filePath, studentName) {
     try {
+        // This is the fix: path.parse(filePath).name gets the filename WITHOUT the extension
+        const fileNameWithoutExt = path.parse(filePath).name;
+
         const result = await cloudinary.uploader.upload(filePath, {
-        resource_type: 'image',
-        public_id: `citd-forms/${studentName}_${path.basename(filePath)}`,
-        upload_preset: 'ip8faemc' // <-- ADD THIS LINE
-});
-        // The file is no longer deleted here
+            resource_type: 'image',
+            public_id: `citd-forms/${studentName}_${fileNameWithoutExt}`, // Use the name without extension
+            upload_preset: 'ip8faemc' // Make sure this is your actual preset name
+        });
+
         console.log(`✅ Uploaded to Cloudinary: ${result.secure_url}`);
         return result.secure_url;
     } catch (error) {
