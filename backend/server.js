@@ -256,21 +256,10 @@ async function sendBatchedFacultyEmail() {
         console.log('📧 No new registrations to send in this batch.');
         return;
     }
-    console.log(`📧 Preparing to send batch email with ${fileQueue.length / 2} student(s) to faculty...`);
+    console.log(`📧 Preparing to send batch email for ${fileQueue.length} student(s) to faculty...`);
     
     try {
-        const attachments = await Promise.all(
-            fileQueue.map(async (item) => {
-                const content = await fs.readFile(item.path);
-                return {
-                    content: content.toString('base64'),
-                    filename: path.basename(item.path),
-                    type: 'application/pdf',
-                    disposition: 'attachment',
-                };
-            })
-        );
-        
+        // Generate a temporary Excel report from MongoDB data
         const allRegistrations = await Registration.find({}).lean();
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Registrations');
@@ -287,13 +276,26 @@ async function sendBatchedFacultyEmail() {
         await workbook.xlsx.writeFile(tempExcelPath);
 
         const excelContent = await fs.readFile(tempExcelPath);
-        attachments.push({
+        const attachments = [{
             content: excelContent.toString('base64'),
             filename: 'Master_Registration_Report.xlsx',
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             disposition: 'attachment',
-        });
+        }];
 
+        // --- NEW: Build an HTML list of links ---
+        let studentLinksHtml = '<ul>';
+        fileQueue.forEach(student => {
+            studentLinksHtml += `
+                <li>
+                    <strong>${student.studentName}</strong><br>
+                    <a href="${student.applicationFormUrl}">View Application</a> | 
+                    <a href="${student.certificateUrl}">View Certificate</a>
+                </li>
+            `;
+        });
+        studentLinksHtml += '</ul>';
+        
         const mailOptions = {
             from: {
                 name: "CITD Registration System",
@@ -301,16 +303,19 @@ async function sendBatchedFacultyEmail() {
             },
             to: process.env.FACULTY_EMAIL,
             subject: `Student Registration Batch Report - ${new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}`,
-            html: `<h3>Batch Registration Report</h3><p>Please find attached documents for <strong>${fileQueue.length / 2}</strong> new student(s).</p>`,
-            attachments: attachments,
+            html: `<h3>Batch Registration Report</h3>
+                   <p>Please find links for <strong>${fileQueue.length}</strong> new student(s) who registered in this period:</p>
+                   ${studentLinksHtml}
+                   <p>The updated master registration report from the database is also attached.</p>`,
+            attachments: attachments, // Only the Excel sheet is attached now
         };
 
         await sgMail.send(mailOptions);
         console.log('✅ Batch email sent successfully to faculty.');
 
-        fileQueue.forEach(file => fs.unlink(file.path).catch(err => console.error(`Error deleting temp file: ${file.path}`, err)));
+        // Clean up temporary Excel file
         await fs.unlink(tempExcelPath);
-        fileQueue = [];
+        fileQueue = []; // Clear the queue
     } catch (error) {
         console.error('❌ CRITICAL ERROR: Failed to send batch email to faculty.', error);
         if (error.response) { console.error(error.response.body); }
@@ -322,9 +327,9 @@ app.get('/', (req, res) => {
     res.redirect('/application_form/index.html');
 });
 
-cron.schedule('15 11 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-cron.schedule('30 11 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-console.log('🕒 Email scheduler is running. Batches will be sent at 11:15 PM and 11:30 PM.');
+cron.schedule('15 0 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+cron.schedule('20 0 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+console.log('🕒 Email scheduler is running. Batches will be sent at 12:15 AM and 12:20 AM.');
 
 // --- API ENDPOINT ---
 app.post('/api/submit-form', async (req, res) => {
@@ -348,8 +353,11 @@ app.post('/api/submit-form', async (req, res) => {
         
         await sendStudentEmail(fullFormData, applicationForm.path);
         
-        fileQueue.push({ type: 'certificate', path: certificate.path });
-        fileQueue.push({ type: 'application', path: applicationForm.path });
+        fileQueue.push({ 
+        studentName: fullFormData.applicantName,
+        certificateUrl: certificate.url,
+        applicationFormUrl: applicationForm.url
+        });
         
         console.log(`📥 Files for ${fullFormData.applicantName} added to the faculty email queue.`);
 
