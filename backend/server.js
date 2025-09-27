@@ -86,26 +86,25 @@ async function getNextSerialNumber() {
 }
 
     async function uploadToCloudinary(filePath, studentName) {
-        try {
-            const fileNameWithoutExt = path.parse(filePath).name;
+    try {
+        const fileNameWithoutExt = path.parse(filePath).name;
+        
+        // FINAL FIX: Aggressively remove all unsafe characters and spaces
+        const safeStudentName = studentName.replace(/[^a-zA-Z0-9_.-]/g, '_');
 
-            // NEW: Replace spaces with underscores and remove other unsafe characters
-            const safeStudentName = studentName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
-
-            const result = await cloudinary.uploader.upload(filePath, {
+        const result = await cloudinary.uploader.upload(filePath, {
             resource_type: 'image',
-            public_id: `citd-forms/${safeStudentName}_${fileNameWithoutExt}`,
-            upload_preset: 'ip8faemc' // <-- PASTE THE REAL NAME HERE
-    });
-
-
-            console.log(`✅ Uploaded to Cloudinary: ${result.secure_url}`);
-            return result.secure_url;
-        } catch (error) {
-            console.error('❌ Cloudinary Upload Error:', error);
-            return null;
-        }
+            public_id: `citd-forms/${safeStudentName}_${fileNameWithoutExt}`, // Use the new safe name
+            upload_preset: 'ip8faemc' // Ensure this is your correct unsigned preset name
+        });
+        
+        console.log(`✅ Uploaded to Cloudinary: ${result.secure_url}`);
+        return result.secure_url;
+    } catch (error) {
+        console.error('❌ Cloudinary Upload Error:', error);
+        return null;
     }
+}
 async function generateCertificate(data) {
     const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
     const page = await browser.newPage();
