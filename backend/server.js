@@ -40,6 +40,16 @@ const registrationSchema = new mongoose.Schema({
     dob: String, gender: String, fatherName: String, motherName: String,
     address: String, email: String, mobile: String, aadhar: String,
     fromDate: String, toDate: String, casteCategory: String, course_fees: String,
+    payment_1_rs: String,
+    payment_1_receipt: String,
+    payment_1_date: String,
+    payment_2_rs: String,
+    payment_2_receipt: String,
+    payment_2_date: String,
+    payment_3_rs: String,
+    payment_3_receipt: String,
+    payment_3_date: String,
+    placement_details: String,
     education: [{ course: String, school: String, spec: String, year: String, perc: String }],
     certificateUrl: String,
     applicationFormUrl: String,
@@ -54,7 +64,6 @@ app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
 // IMPORTANT: Correctly serve static files from the 'frontend' directory
-// This assumes your Dockerfile copies the 'frontend' folder to the root of the app directory
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 // Define paths
@@ -194,6 +203,16 @@ async function generateApplicationFormPdf(data) {
         document.getElementById('email').value = data.email || '';
         document.getElementById('aadhar').value = data.aadhar || '';
         document.getElementById('course_fees').value = data.course_fees || '';
+        document.getElementById('payment_1_rs').value = data.payment_1_rs || '';
+        document.getElementById('payment_1_receipt').value = data.payment_1_receipt || '';
+        document.getElementById('payment_1_date').value = data.payment_1_date || '';
+        document.getElementById('payment_2_rs').value = data.payment_2_rs || '';
+        document.getElementById('payment_2_receipt').value = data.payment_2_receipt || '';
+        document.getElementById('payment_2_date').value = data.payment_2_date || '';
+        document.getElementById('payment_3_rs').value = data.payment_3_rs || '';
+        document.getElementById('payment_3_receipt').value = data.payment_3_receipt || '';
+        document.getElementById('payment_3_date').value = data.payment_3_date || '';
+        document.getElementById('placement_details').value = data.placement_details || '';
         if (data.casteCategory) {
             const radio = document.querySelector(`input[name="caste"][value="${data.casteCategory}"]`);
             if (radio) radio.checked = true;
@@ -325,9 +344,9 @@ async function sendBatchedFacultyEmail() {
             to: process.env.FACULTY_EMAIL,
             subject: `Student Registration Batch Report - ${new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })}`,
             html: `<h3>Batch Registration Report</h3>
-                   <p>Please find links for <strong>${fileQueue.length}</strong> new student(s) who registered in this period:</p>
-                   ${studentLinksHtml}
-                   <p>The updated master registration report from the database is also attached.</p>`,
+                     <p>Please find links for <strong>${fileQueue.length}</strong> new student(s) who registered in this period:</p>
+                     ${studentLinksHtml}
+                     <p>The updated master registration report from the database is also attached.</p>`,
             attachments: attachments,
         };
 
@@ -393,5 +412,4 @@ app.post('/api/submit-form', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`✅ Server running on http://localhost:${PORT}`);
-    // No need to log the full path anymore since we have the root redirect
 });
