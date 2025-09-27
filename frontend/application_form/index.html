@@ -196,7 +196,7 @@
         </form>
     </div>
 
- <script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
         const fileInput = document.getElementById('fileUpload');
         const previewImg = document.getElementById('preview');
@@ -221,7 +221,6 @@
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
 
-            // === NEW VALIDATION LOGIC ===
             const requiredFields = [
                 { id: 'course-name', name: 'Course Name' },
                 { id: 'applicant-name', name: 'Name' },
@@ -235,9 +234,7 @@
                 { nameAttr: 'caste', name: 'Caste Category' },
                 { nameAttr: 'doc_', name: 'at least one Document' }
             ];
-
             let missingFields = [];
-
             requiredFields.forEach(field => {
                 let isMissing = false;
                 if (field.id) {
@@ -260,15 +257,11 @@
                     missingFields.push(field.name);
                 }
             });
-
             if (missingFields.length > 0) {
-                // Remove duplicates for a cleaner message
                 const uniqueMissing = [...new Set(missingFields)];
                 alert(`Please fill out the following required fields:\n- ${uniqueMissing.join('\n- ')}`);
-                return; // Stop the form submission
+                return;
             }
-            // ============================
-
 
             const submitButton = form.querySelector('.submit-btn');
             submitButton.disabled = true;
@@ -327,11 +320,19 @@
                 alert('Submission Failed:\n' + error.message);
             } finally {
                 submitButton.disabled = false;
-                submitButton.textContent = 'Generate Certificate';
+                submitButton.textContent = 'Submit';
             }
         });
     });
+
+    // --- NEW SCRIPT FOR MOBILE POP-UP ---
+    window.onload = function() {
+        // Check if the screen width is less than 768 pixels
+        if (window.innerWidth < 768) {
+            // If it's a small screen, show a pop-up message
+            alert("For the best experience, please switch to 'Desktop site' view in your browser settings.");
+        }
+    };
 </script>
 </body>
 </html>
-
