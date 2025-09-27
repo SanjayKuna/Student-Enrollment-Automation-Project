@@ -87,24 +87,24 @@ async function getNextSerialNumber() {
 
 async function uploadToCloudinary(filePath, studentName) {
     try {
-        const fileNameWithoutExt = path.parse(filePath).name;
-
-        // NEW: Replace spaces with underscores and remove other unsafe characters
-        const safeStudentName = studentName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
+        // SUPER SAFE METHOD: Generate a unique ID for the filename
+        const uniqueId = new mongoose.Types.ObjectId();
+        const publicId = `citd-forms/${path.parse(filePath).name}_${uniqueId}`;
 
         const result = await cloudinary.uploader.upload(filePath, {
             resource_type: 'image',
-            public_id: `citd-forms/${safeStudentName}_${fileNameWithoutExt}`, // Use the new safe name
-            upload_preset: 'ip8faemc' // Make sure this is your actual preset name
+            public_id: publicId, // Use the guaranteed unique and safe ID
+            upload_preset: 'ip8faemc' // Make sure this is your preset name
         });
-
+        
         console.log(`✅ Uploaded to Cloudinary: ${result.secure_url}`);
         return result.secure_url;
     } catch (error) {
-        console.error('❌ Cloudinary Upload Error:', error);
+        console.error('❌ Cloudinary UploadError:', error);
         return null;
     }
 }
+
 async function generateCertificate(data) {
     const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
     const page = await browser.newPage();
@@ -347,8 +347,8 @@ app.get('/', (req, res) => {
     res.redirect('/application_form/index.html');
 });
 
-cron.schedule('15 0 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
-cron.schedule('20 0 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+cron.schedule('20 12 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
+cron.schedule('25 12 * * *', sendBatchedFacultyEmail, { timezone: "Asia/Kolkata" });
 console.log('🕒 Email scheduler is running. Batches will be sent at 12:15 AM and 12:20 AM.');
 
 // --- API ENDPOINT ---
