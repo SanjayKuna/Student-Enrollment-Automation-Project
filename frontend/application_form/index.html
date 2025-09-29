@@ -198,6 +198,13 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- MOBILE POP-UP SCRIPT ---
+        // Check if the screen width is less than 768 pixels
+        if (window.innerWidth < 768) {
+            // If it's a small screen, show a pop-up message
+            alert("For the best experience, please switch to 'Desktop site' view in your browser settings.");
+        }
+
         const fileInput = document.getElementById('fileUpload');
         const previewImg = document.getElementById('preview');
         const fileNameSpan = document.getElementById('fileName');
@@ -334,15 +341,6 @@
             }
         });
     });
-
-    // --- NEW SCRIPT FOR MOBILE POP-UP ---
-    window.onload = function() {
-        // Check if the screen width is less than 768 pixels
-        if (window.innerWidth < 768) {
-            // If it's a small screen, show a pop-up message
-            alert("For the best experience, please switch to 'Desktop site' view in your browser settings.");
-        }
-    };
 </script>
 </body>
 </html>
